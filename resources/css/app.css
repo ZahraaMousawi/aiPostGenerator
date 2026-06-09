@@ -157,6 +157,11 @@ h1 {
     background: #edf8f4;
 }
 
+.status-pill.warning {
+    color: #9a6400;
+    background: #fff7e0;
+}
+
 label {
     display: block;
     margin-bottom: 10px;
@@ -204,6 +209,16 @@ textarea:focus {
 .error-message {
     margin: 10px 0 0;
     color: #ad2f2f;
+    font-weight: 700;
+}
+
+.notice {
+    padding: 16px;
+    border: 1px solid #f0d28b;
+    border-radius: 8px;
+    background: #fff8e6;
+    color: #7a5200;
+    line-height: 1.8;
     font-weight: 700;
 }
 
@@ -313,6 +328,15 @@ textarea:focus {
     background: #edf8f4;
     color: var(--green);
     font-weight: 800;
+}
+
+.generated-image {
+    width: min(100%, 520px);
+    aspect-ratio: 1 / 1;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    object-fit: cover;
+    background: #eef3f6;
 }
 
 @media (max-width: 860px) {

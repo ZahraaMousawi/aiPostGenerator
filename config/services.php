@@ -25,6 +25,13 @@ return [
     'openai' => [
         'key' => env('OPENAI_API_KEY'),
         'model' => env('OPENAI_MODEL', 'gpt-5-mini'),
+        'image_model' => env('OPENAI_IMAGE_MODEL', 'gpt-image-1.5'),
+    ],
+
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-3.5-flash'),
+        'image_model' => env('GEMINI_IMAGE_MODEL', 'gemini-3.1-flash-image'),
     ],
 
     'ses' => [
