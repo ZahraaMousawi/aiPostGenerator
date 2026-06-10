@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>وكيل منشورات المركز الوطني للذكاء الاصطناعي</title>
+    <title>برنامج التصحيح اللغوي</title>
     <link rel="stylesheet" href="{{ asset('app.css') }}">
 </head>
 <body class="app-shell">
@@ -11,101 +11,71 @@
         <section class="intro-band">
             <div class="brand-mark">AI</div>
             <div>
-                <p class="eyebrow">المركز الوطني للذكاء الاصطناعي</p>
-                <h1>وكيل إنشاء منشورات التواصل الاجتماعي</h1>
-                <p class="lead">أدخل خبراً أو فعالية، وسيقوم نموذج الذكاء الاصطناعي بتدقيق النص وتوليد منشورين ووسوم مخصصة وصورة مناسبة للنشر.</p>
+                <p class="eyebrow">مدقق لغوي عربي</p>
+                <h1>برنامج التصحيح اللغوي</h1>
+                <p class="lead">أدخل النص كما هو، وسيعيد البرنامج النص مصححا لغويا مع عنوان وهاشتاقات وفكرة تصميم مناسبة.</p>
             </div>
         </section>
 
-        <section class="tool-grid">
+        <section class="tool-grid single-tool">
             <form class="input-panel" method="POST" action="{{ route('posts.generate') }}">
                 @csrf
                 <div class="panel-header">
                     <div>
-                        <h2>بيانات الخبر</h2>
-                        <p>اكتب الموضوع كما وصلك، وسيعيده الوكيل بصياغة محسنة.</p>
+                        <h2>النص المراد تصحيحه</h2>
+                        <p>المخرج هو عنوان مقترح، النص المصحح، هاشتاقات، وفكرة صورة أو تصميم لمنشور Facebook.</p>
                     </div>
-                    <span class="status-pill">Facebook + Instagram</span>
+                    <span class="status-pill">Gemini</span>
                 </div>
 
-                <label for="topic">الموضوع أو الخبر أو الفعالية</label>
-                <textarea id="topic" name="topic" rows="13" placeholder="مثال: نظم المركز الوطني للذكاء الاصطناعي ورشة تدريبية حول تطبيقات الذكاء الاصطناعي في الخدمات الحكومية..." required>{{ old('topic', $topic) }}</textarea>
+                <label for="topic">النص الأصلي</label>
+                <textarea id="topic" name="topic" rows="13" placeholder="اكتب النص هنا..." required>{{ old('topic', $topic) }}</textarea>
 
                 @error('topic')
                     <p class="error-message">{{ $message }}</p>
                 @enderror
 
                 <button type="submit" class="primary-action">
-                    <span>توليد المنشور والصورة</span>
+                    <span>تصحيح النص واقتراح مخرجات</span>
                     <span aria-hidden="true">↵</span>
                 </button>
             </form>
-
-            <aside class="preview-panel">
-                <div class="panel-header">
-                    <div>
-                        <h2>سير عمل الوكيل</h2>
-                        <p>كل مخرج يعتمد على النص المدخل وليس على قوالب ثابتة.</p>
-                    </div>
-                </div>
-
-                <div class="workflow">
-                    <div><span>1</span> قراءة الموضوع</div>
-                    <div><span>2</span> تدقيق وإعادة صياغة</div>
-                    <div><span>3</span> توليد نسختين مختلفتين</div>
-                    <div><span>4</span> توليد عنوان وHashtags مخصصة</div>
-                    <div><span>5</span> توليد صورة مناسبة للمنشور</div>
-                </div>
-
-                <div class="design-preview">
-                    <div class="preview-topline"></div>
-                    <strong>National AI Center</strong>
-                    <p>سيظهر التصميم المولد داخل النتائج بعد اكتمال الطلب.</p>
-                </div>
-            </aside>
         </section>
 
         @if ($result)
             <section class="results" aria-live="polite">
                 <div class="result-header">
                     <div>
-                        <p class="eyebrow">نتيجة الوكيل</p>
+                        <p class="eyebrow">المخرج</p>
                         <h2>{{ $result['title'] }}</h2>
                     </div>
-                    <span class="status-pill {{ in_array($result['source'], ['gemini', 'openai'], true) ? 'live' : 'warning' }}">
+                    <span class="status-pill {{ $result['source'] === 'gemini' ? 'live' : 'warning' }}">
                         @if ($result['source'] === 'gemini')
-                            Gemini مفعل
-                        @elseif ($result['source'] === 'openai')
-                            OpenAI مفعل
+                            Gemini
                         @else
-                            يحتاج إعداد
+                            يحتاج إلى إعداد
                         @endif
                     </span>
                 </div>
 
-                @if (! in_array($result['source'], ['gemini', 'openai'], true))
+                @if ($result['source'] !== 'gemini')
                     <div class="notice">
                         {{ $result['image_error'] }}
                     </div>
                 @else
                     <div class="output-grid">
                         <article class="output-card wide">
-                            <h3>النص بعد التدقيق</h3>
+                            <h3>العنوان المقترح</h3>
+                            <p>{{ $result['suggested_title'] }}</p>
+                        </article>
+
+                        <article class="output-card wide">
+                            <h3>النص بعد التصحيح</h3>
                             <p>{{ $result['corrected_news'] }}</p>
                         </article>
 
-                        <article class="output-card">
-                            <h3>النسخة الرسمية</h3>
-                            <p>{!! nl2br(e($result['official_post'])) !!}</p>
-                        </article>
-
-                        <article class="output-card">
-                            <h3>نسخة ملف النشاطات</h3>
-                            <p>{!! nl2br(e($result['activity_post'])) !!}</p>
-                        </article>
-
-                        <article class="output-card">
-                            <h3>Hashtags مولدة حسب الخبر</h3>
+                        <article class="output-card wide">
+                            <h3>هاشتاقات مقترحة لـ Facebook</h3>
                             <div class="hashtags">
                                 @foreach ($result['hashtags'] as $hashtag)
                                     <span>{{ $hashtag }}</span>
@@ -113,18 +83,9 @@
                             </div>
                         </article>
 
-                        <article class="output-card">
-                            <h3>اقتراح الصورة أو التصميم</h3>
-                            <p>{{ $result['visual_suggestion'] }}</p>
-                        </article>
-
                         <article class="output-card wide">
-                            <h3>الصورة المولدة</h3>
-                            @if ($result['image_data_url'])
-                                <img class="generated-image" src="{{ $result['image_data_url'] }}" alt="صورة مولدة للمنشور">
-                            @else
-                                <p class="error-message">{{ $result['image_error'] }}</p>
-                            @endif
+                            <h3>اقتراح تصميم أو صورة</h3>
+                            <p>{{ $result['visual_suggestion'] }}</p>
                         </article>
                     </div>
                 @endif

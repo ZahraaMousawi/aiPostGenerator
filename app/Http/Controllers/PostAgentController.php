@@ -21,9 +21,9 @@ class PostAgentController extends Controller
         $validated = $request->validate([
             'topic' => ['required', 'string', 'min:15', 'max:4000'],
         ], [
-            'topic.required' => 'يرجى إدخال موضوع أو خبر أو فعالية.',
-            'topic.min' => 'يرجى إدخال تفاصيل أكثر حتى يتمكن الوكيل من إنشاء منشور مناسب.',
-            'topic.max' => 'النص طويل جداً. الحد الأقصى 4000 حرف.',
+            'topic.required' => 'يرجى إدخال النص المراد تصحيحه.',
+            'topic.min' => 'يرجى إدخال نص أطول حتى يتمكن المدقق من تصحيحه بدقة.',
+            'topic.max' => 'النص طويل جدا. الحد الأقصى 4000 حرف.',
         ]);
 
         return view('welcome', [
