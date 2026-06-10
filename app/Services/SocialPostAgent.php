@@ -86,7 +86,6 @@ class SocialPostAgent
   "suggested_title": "عنوان مناسب مشتق من النص",
   "corrected_news": "النص المصحح",
   "hashtags": ["#هاشتاق_مناسب", "#هاشتاق_آخر"],
-  "visual_suggestion": "اقتراح تصميم أو صورة مناسبة للموضوع",
   "title": "تصحيح لغوي مع عنوان مقترح"
 }
 
@@ -96,8 +95,6 @@ class SocialPostAgent
 - اجعل العنوان واضحا وقصيرا ومشتقا من مضمون النص.
 - اقترح من 3 إلى 6 هاشتاقات مناسبة لمنشور Facebook، قصيرة وواضحة ومشتقة من النص.
 - اكتب الهاشتاقات بالعربية عند الإمكان، وابدأ كل هاشتاق بعلامة #.
-- اقترح فكرة تصميم أو صورة مناسبة لمنشور Facebook، مع وصف العناصر البصرية والألوان والنص الظاهر إن وجد.
-- اجعل اقتراح التصميم عمليا وواضحا، ولا تضف وقائع أو شعارات أو أسماء غير موجودة في النص.
 - استخدم العربية الفصحى.
 
 النص المدخل:
@@ -145,7 +142,6 @@ PROMPT;
             'suggested_title' => trim((string) ($payload['suggested_title'] ?? '')),
             'corrected_news' => trim((string) ($payload['corrected_news'] ?? '')),
             'hashtags' => $this->normalizeHashtags($payload['hashtags'] ?? []),
-            'visual_suggestion' => trim((string) ($payload['visual_suggestion'] ?? '')),
             'title' => trim((string) ($payload['title'] ?? 'تصحيح لغوي مع عنوان مقترح')),
         ];
     }
@@ -175,14 +171,12 @@ PROMPT;
                     'type' => 'array',
                     'items' => ['type' => 'string'],
                 ],
-                'visual_suggestion' => ['type' => 'string'],
                 'title' => ['type' => 'string'],
             ],
             'required' => [
                 'suggested_title',
                 'corrected_news',
                 'hashtags',
-                'visual_suggestion',
                 'title',
             ],
         ];
@@ -206,7 +200,6 @@ PROMPT;
             'suggested_title' => '',
             'corrected_news' => '',
             'hashtags' => [],
-            'visual_suggestion' => '',
             'title' => 'لم يتم تفعيل المدقق اللغوي',
             'image_error' => 'أضف GEMINI_API_KEY في ملف .env ثم أعد تشغيل الخادم حتى يتم تصحيح النص بواسطة Gemini.',
         ];
@@ -219,7 +212,6 @@ PROMPT;
             'suggested_title' => '',
             'corrected_news' => '',
             'hashtags' => [],
-            'visual_suggestion' => '',
             'title' => 'تعذر التصحيح عبر Gemini',
             'image_error' => $details
                 ? 'فشل Gemini في تصحيح النص: '.$details

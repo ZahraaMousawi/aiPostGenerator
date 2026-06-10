@@ -13,7 +13,7 @@
             <div>
                 <p class="eyebrow">مدقق لغوي عربي</p>
                 <h1>برنامج التصحيح اللغوي</h1>
-                <p class="lead">أدخل النص كما هو، وسيعيد البرنامج النص مصححا لغويا مع عنوان وهاشتاقات وفكرة تصميم مناسبة.</p>
+                <p class="lead">أدخل النص كما هو، وسيعيد البرنامج النص مصححا لغويا مع عنوان مقترح مناسب.</p>
             </div>
         </section>
 
@@ -23,7 +23,7 @@
                 <div class="panel-header">
                     <div>
                         <h2>النص المراد تصحيحه</h2>
-                        <p>المخرج هو عنوان مقترح، النص المصحح، هاشتاقات، وفكرة صورة أو تصميم لمنشور Facebook.</p>
+                        <p>المخرج هو عنوان مقترح، النص المصحح، وهاشتاقات مناسبة لمنشور Facebook.</p>
                     </div>
                     <span class="status-pill">Gemini</span>
                 </div>
@@ -81,11 +81,6 @@
                                     <span>{{ $hashtag }}</span>
                                 @endforeach
                             </div>
-                        </article>
-
-                        <article class="output-card wide">
-                            <h3>اقتراح تصميم أو صورة</h3>
-                            <p>{{ $result['visual_suggestion'] }}</p>
                         </article>
                     </div>
                 @endif
