@@ -3,86 +3,125 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>برنامج التصحيح اللغوي</title>
+    <title>المركز الوطني للذكاء الاصطناعي</title>
     <link rel="stylesheet" href="{{ asset('app.css') }}">
 </head>
-<body class="app-shell">
-    <main class="workspace">
-        <section class="intro-band">
-            <div class="brand-mark">AI</div>
-            <div>
-                <p class="eyebrow">مدقق لغوي عربي</p>
-                <h1>برنامج التصحيح اللغوي</h1>
-                <p class="lead">أدخل النص كما هو، وسيعيد البرنامج النص مصححا لغويا مع عنوان مقترح مناسب.</p>
+<body class="command-shell">
+    <main class="command-center">
+        <header class="command-hero">
+            <div class="live-block">
+                <span class="live-dot"></span>
+                <strong>مراقبة مباشرة</strong>
+                <small>بغداد - {{ now()->format('H:i') }}</small>
+            </div>
+
+            <div class="command-title">
+                <img class="center-logo" src="{{ asset('branding/national-ai-center-logo.jpg') }}" alt="شعار المركز الوطني للذكاء الاصطناعي">
+                <span>منصة المحتوى الذكي</span>
+                <h1>المركز الوطني للذكاء الاصطناعي</h1>
+            </div>
+        </header>
+
+        <section class="metric-grid" aria-label="مؤشرات المنشور">
+            <div class="metric-card">
+                <span>المدخلات</span>
+                <strong>نص</strong>
+                <small>تحويل المحتوى الخام</small>
+            </div>
+            <div class="metric-card">
+                <span>المعالجة</span>
+                <strong>صياغة</strong>
+                <small>تصحيح وعنوان ووسوم</small>
+            </div>
+            <div class="metric-card">
+                <span>الصورة</span>
+                <strong>مشهد</strong>
+                <small>مرتبطة بمعنى النص</small>
+            </div>
+            <div class="metric-card">
+                <span>الناتج</span>
+                <strong>منشور</strong>
+                <small>جاهز للمراجعة والنشر</small>
             </div>
         </section>
 
-        <section class="tool-grid single-tool">
-            <form class="input-panel" method="POST" action="{{ route('posts.generate') }}">
+        <section class="command-layout">
+            <form class="command-card composer-panel" method="POST" action="{{ route('posts.generate') }}">
                 @csrf
-                <div class="panel-header">
-                    <div>
-                        <h2>النص المراد تصحيحه</h2>
-                        <p>المخرج هو عنوان مقترح، النص المصحح، وهاشتاقات مناسبة لمنشور Facebook.</p>
-                    </div>
-                    <span class="status-pill">Gemini</span>
+                <div class="card-heading">
+                    <span>لوحة الإدخال</span>
+                    <strong>النص</strong>
                 </div>
 
-                <label for="topic">النص الأصلي</label>
-                <textarea id="topic" name="topic" rows="13" placeholder="اكتب النص هنا..." required>{{ old('topic', $topic) }}</textarea>
+                <label for="topic">أدخل النص</label>
+                <textarea id="topic" name="topic" rows="9" placeholder="اكتب النص هنا..." required>{{ old('topic', $topic) }}</textarea>
 
                 @error('topic')
                     <p class="error-message">{{ $message }}</p>
                 @enderror
 
                 <button type="submit" class="primary-action">
-                    <span>تصحيح النص واقتراح مخرجات</span>
+                    <span>توليد المنشور</span>
                     <span aria-hidden="true">↵</span>
                 </button>
             </form>
+
+            <aside class="command-card signal-panel">
+                <div class="card-heading">
+                    <span>حالة المحتوى</span>
+                    <strong>{{ $result && $result['source'] === 'gemini' ? 'جاهز' : 'بانتظار النص' }}</strong>
+                </div>
+
+                <div class="signal-list">
+                    <div><span></span> عنوان مناسب</div>
+                    <div><span></span> نص مصحح</div>
+                    <div><span></span> صورة للموضوع</div>
+                    <div><span></span> هاشتاقات للنشر</div>
+                </div>
+            </aside>
         </section>
 
         @if ($result)
-            <section class="results" aria-live="polite">
-                <div class="result-header">
-                    <div>
-                        <p class="eyebrow">المخرج</p>
-                        <h2>{{ $result['title'] }}</h2>
-                    </div>
-                    <span class="status-pill {{ $result['source'] === 'gemini' ? 'live' : 'warning' }}">
-                        @if ($result['source'] === 'gemini')
-                            Gemini
-                        @else
-                            يحتاج إلى إعداد
-                        @endif
-                    </span>
-                </div>
-
+            <section class="post-section" aria-live="polite">
                 @if ($result['source'] !== 'gemini')
                     <div class="notice">
                         {{ $result['image_error'] }}
                     </div>
                 @else
-                    <div class="output-grid">
-                        <article class="output-card wide">
-                            <h3>العنوان المقترح</h3>
-                            <p>{{ $result['suggested_title'] }}</p>
-                        </article>
-
-                        <article class="output-card wide">
-                            <h3>النص بعد التصحيح</h3>
-                            <p>{{ $result['corrected_news'] }}</p>
-                        </article>
-
-                        <article class="output-card wide">
-                            <h3>هاشتاقات مقترحة لـ Facebook</h3>
-                            <div class="hashtags">
-                                @foreach ($result['hashtags'] as $hashtag)
-                                    <span>{{ $hashtag }}</span>
-                                @endforeach
+                    <article class="facebook-post">
+                        <header class="facebook-post-header">
+                            <img class="page-avatar logo-avatar" src="{{ asset('branding/national-ai-center-logo.jpg') }}" alt="">
+                            <div>
+                                <strong>المركز الوطني للذكاء الاصطناعي</strong>
+                                <span>الآن</span>
                             </div>
-                        </article>
-                    </div>
+                        </header>
+
+                        <div class="facebook-post-copy">
+                            <p class="post-title-line">({{ $result['suggested_title'] }})</p>
+                            <p>{{ $result['corrected_news'] }}</p>
+                        </div>
+
+                        <div class="facebook-hashtags facebook-hashtags-body">
+                            @foreach ($result['hashtags'] as $hashtag)
+                                <span>{{ $hashtag }}</span>
+                            @endforeach
+                        </div>
+
+                        @if ($result['image_url'])
+                            <img class="facebook-post-image" src="{{ $result['image_url'] }}" alt="صورة مناسبة للمنشور">
+                        @elseif ($result['image_error'])
+                            <div class="notice post-notice">{{ $result['image_error'] }}</div>
+                        @endif
+
+                        <footer class="facebook-post-footer">
+                            <div class="facebook-actions" aria-hidden="true">
+                                <span>أعجبني</span>
+                                <span>تعليق</span>
+                                <span>مشاركة</span>
+                            </div>
+                        </footer>
+                    </article>
                 @endif
             </section>
         @endif
