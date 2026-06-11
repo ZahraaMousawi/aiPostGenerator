@@ -186,6 +186,30 @@ textarea:focus {
     box-shadow: 0 0 0 3px rgba(19, 95, 143, 0.14);
 }
 
+.composer-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.metric-card.is-complete,
+.signal-list div.is-complete {
+    border-color: rgba(198, 146, 20, 0.62);
+    background: #fff7d6;
+    box-shadow: 0 12px 30px rgba(198, 146, 20, 0.16);
+    color: #7a5200;
+}
+
+.metric-card.is-waiting,
+.signal-list div.is-waiting {
+    border-color: rgba(198, 146, 20, 0.38);
+    background: #fff7e0;
+}
+
 .primary-action {
     display: inline-flex;
     justify-content: center;
@@ -292,8 +316,8 @@ textarea:focus {
 }
 
 .output-card {
-    min-height: 160px;
-    padding: 18px;
+    min-height: 128px;
+    padding: 14px;
     border: 1px solid var(--line);
     border-radius: 8px;
     background: #fbfcfd;
@@ -304,16 +328,17 @@ textarea:focus {
 }
 
 .output-card h3 {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     color: var(--blue);
-    font-size: 17px;
+    font-size: 15px;
     font-weight: 800;
 }
 
 .output-card p {
     margin-bottom: 0;
     color: #2c3844;
-    line-height: 1.85;
+    font-size: 14px;
+    line-height: 1.7;
 }
 
 .hashtags {
@@ -352,11 +377,7 @@ textarea:focus {
 }
 
 .output-summary {
-    width: min(760px, 100%);
-    padding: 16px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: var(--panel);
+    width: min(860px, 100%);
 }
 
 .output-summary-heading {
@@ -372,27 +393,131 @@ textarea:focus {
     font-size: 13px;
 }
 
-.output-row {
-    display: grid;
-    grid-template-columns: minmax(140px, 190px) minmax(0, 1fr);
-    gap: 12px;
-    padding: 13px 0;
-    border-bottom: 1px solid var(--line);
+.output-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
 }
 
-.output-row:last-child {
-    border-bottom: 0;
-    padding-bottom: 0;
-}
-
-.output-row strong {
+.compact-action,
+.icon-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #f8fbfd;
     color: var(--blue);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.output-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.result-card {
+    min-height: 112px;
+    padding: 12px;
+    border-bottom: 1px solid var(--line);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+}
+
+.result-card.wide {
+    grid-column: 1 / -1;
+}
+
+.result-card-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: start;
+    margin-bottom: 10px;
+}
+
+.result-card-header strong {
+    color: var(--blue);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.result-card p {
+    margin: 0;
+    font-size: 14px;
     line-height: 1.7;
 }
 
-.output-row p {
-    margin: 0;
-    line-height: 1.8;
+.preview-shell {
+    width: min(620px, 100%);
+}
+
+.preview-heading,
+.instagram-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+}
+
+.preview-tabs {
+    display: inline-flex;
+    gap: 4px;
+}
+
+.preview-tab {
+    min-height: 30px;
+    padding: 5px 9px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #f8fbfd;
+    color: var(--blue);
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.preview-tab.is-active {
+    background: var(--blue);
+    color: #fff;
+}
+
+.platform-preview,
+.copy-buffer {
+    display: none;
+}
+
+.platform-preview.is-active {
+    display: block;
+}
+
+.instagram-post {
+    width: min(460px, 100%);
+    margin: 0 auto;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+}
+
+.instagram-image {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    background: #eef3f6;
+}
+
+.instagram-caption {
+    padding: 12px;
 }
 
 @media (max-width: 860px) {
@@ -407,8 +532,12 @@ textarea:focus {
         flex-direction: column;
     }
 
-    .output-row {
+    .output-card-grid {
         grid-template-columns: 1fr;
-        gap: 4px;
+    }
+
+    .preview-heading {
+        align-items: stretch;
+        flex-direction: column;
     }
 }
