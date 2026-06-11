@@ -88,6 +88,38 @@
                         {{ $result['image_error'] }}
                     </div>
                 @else
+                    <article class="output-summary" aria-label="مخرجات المنشور">
+                        <div class="output-summary-heading">
+                            <span>المخرجات</span>
+                            <strong>جاهزة للمراجعة</strong>
+                        </div>
+
+                        <div class="output-row">
+                            <strong>العنوان المقترح:</strong>
+                            <p>{{ $result['suggested_title'] }}</p>
+                        </div>
+
+                        <div class="output-row">
+                            <strong>نص المنشور المصحح:</strong>
+                            <p>{{ $result['corrected_news'] }}</p>
+                        </div>
+
+                        <div class="output-row">
+                            <strong>نسخة ملف نشاطات المركز:</strong>
+                            <p>{{ $result['activity_file_copy'] }}</p>
+                        </div>
+
+                        <div class="output-row">
+                            <strong>مقترح الصورة أو التصميم:</strong>
+                            <p>{{ $result['visual_suggestion'] }}</p>
+                        </div>
+
+                        <div class="output-row">
+                            <strong>الهاشتاقات:</strong>
+                            <p>{{ implode(' ', $result['hashtags']) }}</p>
+                        </div>
+                    </article>
+
                     <article class="facebook-post">
                         <header class="facebook-post-header">
                             <img class="page-avatar logo-avatar" src="{{ asset('branding/national-ai-center-logo.jpg') }}" alt="">
@@ -110,6 +142,15 @@
 
                         @if ($result['image_url'])
                             <img class="facebook-post-image" src="{{ $result['image_url'] }}" alt="صورة مناسبة للمنشور">
+                            @if ($result['image_credit'] ?? null)
+                                <p class="image-credit">
+                                    @if ($result['image_source_url'] ?? null)
+                                        <a href="{{ $result['image_source_url'] }}" target="_blank" rel="noopener noreferrer">{{ $result['image_credit'] }}</a>
+                                    @else
+                                        {{ $result['image_credit'] }}
+                                    @endif
+                                </p>
+                            @endif
                         @elseif ($result['image_error'])
                             <div class="notice post-notice">{{ $result['image_error'] }}</div>
                         @endif

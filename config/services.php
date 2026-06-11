@@ -31,7 +31,10 @@ return [
     'gemini' => [
         'key' => env('GEMINI_API_KEY'),
         'model' => env('GEMINI_MODEL', 'gemini-3.5-flash'),
-        'image_model' => env('GEMINI_IMAGE_MODEL', 'gemini-3.1-flash-image'),
+    ],
+
+    'pexels' => [
+        'key' => env('PEXELS_API_KEY'),
     ],
 
     'ses' => [
