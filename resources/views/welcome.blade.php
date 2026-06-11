@@ -128,7 +128,7 @@
                         </div>
 
                         <div class="output-card-grid">
-                            <section class="result-card title-card is-complete">
+                            <section class="result-card title-card">
                                 <div class="result-card-header">
                                     <strong data-i18n="suggested_title">العنوان المقترح:</strong>
                                     <button type="button" class="icon-action" title="نسخ العنوان" data-i18n-title="copy_title" data-copy-target="suggested-title" data-i18n="copy">نسخ</button>
@@ -136,7 +136,7 @@
                                 <p id="suggested-title" dir="auto">{{ $result['suggested_title'] }}</p>
                             </section>
 
-                            <section class="result-card wide is-complete">
+                            <section class="result-card wide">
                                 <div class="result-card-header">
                                     <strong data-i18n="corrected_post">نص المنشور المصحح:</strong>
                                     <button type="button" class="icon-action" title="نسخ نص المنشور" data-i18n-title="copy_post_text" data-copy-target="corrected-copy" data-i18n="copy">نسخ</button>
@@ -144,7 +144,7 @@
                                 <p id="corrected-copy" dir="auto">{{ $result['corrected_news'] }}</p>
                             </section>
 
-                            <section class="result-card wide is-complete">
+                            <section class="result-card wide">
                                 <div class="result-card-header">
                                     <strong data-i18n="activity_file">نسخة ملف نشاطات المركز:</strong>
                                     <button type="button" class="icon-action" title="نسخ نسخة ملف النشاطات" data-i18n-title="copy_activity" data-copy-target="activity-copy" data-i18n="copy">نسخ</button>
@@ -152,7 +152,7 @@
                                 <p id="activity-copy" dir="auto">{{ $result['activity_file_copy'] }}</p>
                             </section>
 
-                            <section class="result-card is-complete">
+                            <section class="result-card">
                                 <div class="result-card-header">
                                     <strong data-i18n="visual_suggestion">مقترح الصورة أو التصميم:</strong>
                                     <button type="button" class="icon-action" title="نسخ المقترح" data-i18n-title="copy_suggestion" data-copy-target="visual-copy" data-i18n="copy">نسخ</button>
@@ -160,7 +160,7 @@
                                 <p id="visual-copy" dir="auto">{{ $result['visual_suggestion'] }}</p>
                             </section>
 
-                            <section class="result-card is-complete">
+                            <section class="result-card">
                                 <div class="result-card-header">
                                     <strong data-i18n="hashtags">الهاشتاقات:</strong>
                                     <button type="button" class="icon-action" title="نسخ الهاشتاقات" data-i18n-title="copy_hashtags" data-copy-target="hashtags-copy" data-i18n="copy">نسخ</button>

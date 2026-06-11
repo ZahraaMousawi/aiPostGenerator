@@ -557,6 +557,7 @@ textarea:focus {
 
 .output-summary {
     width: min(860px, 100%);
+    margin-inline: auto;
 }
 
 .output-summary-heading {
@@ -612,12 +613,6 @@ textarea:focus {
     background: var(--panel);
 }
 
-.result-card.is-complete {
-    border-color: #eab308;
-    background: #fef08a;
-    box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.16), 0 16px 34px rgba(234, 179, 8, 0.24);
-}
-
 .result-card.title-card {
     width: fit-content;
     min-width: 0;
@@ -661,6 +656,7 @@ textarea:focus {
 
 .preview-shell {
     width: min(620px, 100%);
+    margin-inline: auto;
 }
 
 .preview-heading,

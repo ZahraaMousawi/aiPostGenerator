@@ -1382,6 +1382,7 @@ body[dir="ltr"] .command-title {
 
 .command-shell .post-section {
     display: grid;
+    justify-items: center;
     gap: 12px;
     padding: 14px;
     animation: rise-in 0.8s ease both;
@@ -1389,6 +1390,7 @@ body[dir="ltr"] .command-title {
 
 .command-shell .output-summary {
     width: min(860px, 100%);
+    margin-inline: auto;
     padding: 0;
     border: 0;
     border-radius: 0;
@@ -1469,16 +1471,6 @@ body[dir="ltr"] .command-title {
     box-shadow: 0 12px 30px rgba(37, 99, 145, 0.10);
 }
 
-.result-card.is-complete {
-    border-color: #eab308;
-    background:
-        linear-gradient(180deg, rgba(254, 240, 138, 0.96), rgba(253, 224, 71, 0.78));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.88),
-        0 0 0 2px rgba(234, 179, 8, 0.16),
-        0 18px 38px rgba(234, 179, 8, 0.26);
-}
-
 .result-card.title-card {
     width: fit-content;
     min-width: 0;
@@ -1531,6 +1523,7 @@ body[dir="ltr"] .command-title {
 
 .preview-shell {
     width: min(620px, 100%);
+    margin-inline: auto;
 }
 
 .preview-heading {
@@ -2037,17 +2030,6 @@ html.theme-dark .result-card,
     border-color: rgba(148, 163, 184, 0.22);
     background: rgba(15, 23, 42, 0.70);
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.14);
-}
-
-html.theme-dark .result-card.is-complete,
-.command-shell.theme-dark .result-card.is-complete {
-    border-color: #facc15;
-    background:
-        linear-gradient(180deg, rgba(250, 204, 21, 0.30), rgba(15, 23, 42, 0.72));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.06),
-        0 0 0 2px rgba(250, 204, 21, 0.14),
-        0 20px 46px rgba(250, 204, 21, 0.22);
 }
 
 html.theme-dark .result-card-header strong,
