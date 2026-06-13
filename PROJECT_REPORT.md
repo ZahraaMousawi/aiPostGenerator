@@ -10,21 +10,20 @@
 2. يرسل المستخدم النص إلى المسار `POST /generate`.
 3. يتحقق `PostAgentController` من أن النص موجود ومناسب الطول.
 4. تستدعي طبقة التحكم خدمة `SocialPostAgent`.
-5. إذا كان `GEMINI_API_KEY` متوفراً، يستخدم الوكيل Gemini API لتوليد JSON منظّم للنص والهاشتاكات ووصف الصورة.
-6. إذا لم يتوفر Gemini وكان `OPENAI_API_KEY` متوفراً، يستخدم الوكيل OpenAI Responses API كمسار بديل.
-7. يولد النموذج العنوان، التصحيح، نسختي المنشور، والـ Hashtags حسب معنى الخبر المدخل.
-8. يستخدم التطبيق وصف الصورة الناتج من الوكيل لتوليد صورة فعلية عبر Gemini image model أو OpenAI Images API.
-9. إذا لم يكن أي مفتاح متوفراً أو تعذر الاتصال، تعرض الواجهة رسالة إعداد واضحة بدلاً من إظهار منشورات أو Hashtags ثابتة.
+5. إذا كان `GEMINI_API_KEY` متوفراً، يستخدم الوكيل Gemini API لتوليد JSON منظّم للنص والهاشتاكات ومقترح صورة مختصر.
+6. يختصر التطبيق مقترح الصورة الناتج من Gemini ويحوله إلى عبارة بحث مناسبة.
+7. إذا كان `PEXELS_API_KEY` متوفراً، يبحث التطبيق في Pexels API عن صورة حقيقية مناسبة لعبارة البحث.
+8. لا يستخدم التطبيق Pollinations ولا أي نموذج ذكاء اصطناعي لتوليد الصورة؛ الصورة تأتي من Pexels فقط عند توفر نتيجة.
+9. إذا لم يكن مفتاح Gemini أو Pexels متوفراً، أو تعذر العثور على صورة مناسبة، تعرض الواجهة رسالة إعداد واضحة.
 
 ## التقنيات المستخدمة
 
 - Laravel 12 لإدارة المسارات والتحقق والخدمات وBlade.
 - Blade لإنشاء واجهة عربية باتجاه RTL.
 - Vite وTailwind entry لبناء ملفات الواجهة.
-- Laravel HTTP Client للتكامل مع OpenAI.
-- Gemini API لتوليد النص المنظم والصورة عند توفر `GEMINI_API_KEY`.
-- OpenAI Responses API كنقطة اتصال للنموذج اللغوي.
-- OpenAI Images API لتوليد صورة مربعة للمنشور.
+- Laravel HTTP Client للتكامل مع Gemini وPexels.
+- Gemini API لتوليد النص المنظم ومقترح الصورة المختصر عند توفر `GEMINI_API_KEY`.
+- Pexels API لجلب صورة حقيقية مناسبة للمقترح عند توفر `PEXELS_API_KEY`.
 - CSS مخصص لتصميم واجهة تشغيل عملية بدون اعتماد على قوالب خارجية.
 
 ## إعداد النموذج اللغوي
@@ -34,11 +33,11 @@
 ```env
 OPENAI_API_KEY=ضع_المفتاح_هنا
 OPENAI_MODEL=gpt-5-mini
-OPENAI_IMAGE_MODEL=gpt-image-1.5
 
 GEMINI_API_KEY=ضع_مفتاح_Gemini_هنا
 GEMINI_MODEL=gemini-3.5-flash
-GEMINI_IMAGE_MODEL=gemini-3.1-flash-image
+
+PEXELS_API_KEY=ضع_مفتاح_Pexels_هنا
 ```
 
 يعتمد Gemini على:
@@ -47,29 +46,24 @@ GEMINI_IMAGE_MODEL=gemini-3.1-flash-image
 https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent
 ```
 
-ويعتمد توليد النص عبر OpenAI على إرسال `model` و`input` إلى endpoint:
+ويعتمد جلب الصور من Pexels على:
 
 ```text
-https://api.openai.com/v1/responses
-```
-
-ويعتمد توليد الصورة على:
-
-```text
-https://api.openai.com/v1/images/generations
+https://api.pexels.com/v1/search
 ```
 
 ## الملفات الرئيسية
 
 - `app/Http/Controllers/PostAgentController.php`: استقبال الطلبات والتحقق منها.
-- `app/Services/SocialPostAgent.php`: منطق الوكيل والتكامل مع النموذج اللغوي والمولد الاحتياطي.
+- `app/Services/SocialPostAgent.php`: منطق الوكيل والتكامل مع Gemini وPexels.
 - `resources/views/welcome.blade.php`: واجهة المستخدم وعرض النتائج.
 - `resources/css/app.css`: تنسيق الواجهة.
 - `routes/web.php`: تعريف مسارات التطبيق.
-- `config/services.php`: إعداد مفتاح OpenAI واسم النموذج.
+- `config/services.php`: إعداد مفاتيح Gemini وPexels.
 
 ## ملاحظات
 
-- عند عدم إضافة مفتاح OpenAI يعرض المشروع رسالة إعداد واضحة، لأن المحتوى والوسوم والصورة يجب أن تأتي من AI.
+- عند عدم إضافة مفتاح Gemini يعرض المشروع رسالة إعداد واضحة، لأن المحتوى والوسوم تأتي من النموذج اللغوي.
+- عند عدم إضافة مفتاح Pexels أو عدم العثور على نتيجة، تعرض الواجهة رسالة واضحة بدلاً من توليد صورة بالذكاء الاصطناعي.
 - الهاشتاكات ليست ثابتة؛ يتم توليدها من النموذج حسب الخبر المدخل.
 - يمكن لاحقاً إضافة حفظ للمنشورات في قاعدة البيانات، وتصدير PDF، وزر نسخ مباشر لكل منشور.

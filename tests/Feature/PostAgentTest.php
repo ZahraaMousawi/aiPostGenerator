@@ -4,34 +4,23 @@ namespace Tests\Feature;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class PostAgentTest extends TestCase
 {
-    private array $existingGeneratedImages = [];
-
     protected function setUp(): void
     {
         parent::setUp();
 
         Config::set('services.pexels.key', null);
-        $this->existingGeneratedImages = $this->generatedImageFileNames();
-    }
-
-    protected function tearDown(): void
-    {
-        $this->deleteNewGeneratedFiles($this->existingGeneratedImages);
-
-        parent::tearDown();
     }
 
     public function test_it_renders_outputs_with_a_real_image_result(): void
     {
         Config::set('services.gemini.key', 'gemini-test-key');
         Config::set('services.gemini.model', 'gemini-3.5-flash');
-        $existingImages = $this->generatedImageFileNames();
+        Config::set('services.pexels.key', 'pexels-test-key');
 
         Http::fake([
             'generativelanguage.googleapis.com/*gemini-3.5-flash*' => Http::response($this->modelPayload([
@@ -41,10 +30,10 @@ class PostAgentTest extends TestCase
                 'hashtags' => ['#AI', '#DataAnalysis', '#HealthData'],
                 'visual_suggestion' => 'People learning from data charts.',
             ]), 200),
-            'image.pollinations.ai/*' => Http::response('fake-jpg', 200, [
-                'Content-Type' => 'image/jpeg',
-            ]),
-            'commons.wikimedia.org/*' => Http::response($this->commonsPayload('https://upload.wikimedia.org/example/photo.jpg'), 200),
+            'api.pexels.com/*' => Http::response($this->pexelsPayload(
+                'https://images.pexels.com/photos/example/data-workshop.jpeg',
+                'Jane Doe'
+            ), 200),
         ]);
 
         $response = $this->post('/generate', [
@@ -65,8 +54,8 @@ class PostAgentTest extends TestCase
             ->assertSee('People learning from data charts.')
             ->assertSee('الهاشتاقات:')
             ->assertSee('#AI')
-            ->assertSee('generated-images/', false)
-            ->assertSee('الصورة: Pollinations AI')
+            ->assertSee('https://images.pexels.com/photos/example/data-workshop.jpeg', false)
+            ->assertSee('الصورة: Jane Doe / Pexels')
             ->assertDontSee('Gemini');
 
         Http::assertSent(function ($request) {
@@ -75,22 +64,18 @@ class PostAgentTest extends TestCase
             return str_contains($request->url(), 'generativelanguage.googleapis.com')
                 && ! str_contains($prompt, 'image_search_query')
                 && str_contains($prompt, 'لا تضف أي معلومة جديدة')
-                && str_contains($prompt, 'لا تذكر "المركز"');
+                && str_contains($prompt, 'لا تذكر "المركز"')
+                && str_contains($prompt, 'عبارة بحث قصيرة ومختصرة');
         });
-        Http::assertSent(fn ($request) => str_contains($request->url(), 'image.pollinations.ai')
-            && str_contains(urldecode($request->url()), 'real unedited photo')
-            && str_contains(urldecode($request->url()), 'model=flux')
-            && str_contains(urldecode($request->url()), 'enhance=true')
-            && str_contains(urldecode($request->url()), 'The national AI center launched a specialized training initiative'));
-        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'commons.wikimedia.org')
-            && str_contains(urldecode($request->url()), 'real people using laptops in technology workshop')
-            && str_contains(urldecode($request->url()), 'people training workshop')
-            && str_contains(urldecode($request->url()), 'data analysis charts'));
-
-        $this->deleteNewGeneratedFiles($existingImages);
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'api.pexels.com')
+            && $request->hasHeader('Authorization', 'pexels-test-key')
+            && str_contains(urldecode($request->url()), 'query=data analysis charts')
+            && str_contains(urldecode($request->url()), 'per_page=10'));
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'image.pollinations.ai'));
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'commons.wikimedia.org'));
     }
 
-    public function test_it_falls_back_to_pexels_photo_when_pollinations_fails(): void
+    public function test_it_uses_pexels_photo_from_summarized_visual_suggestion(): void
     {
         Config::set('services.gemini.key', 'gemini-test-key');
         Config::set('services.gemini.model', 'gemini-3.5-flash');
@@ -104,14 +89,10 @@ class PostAgentTest extends TestCase
                 'hashtags' => ['#Family', '#Graduation'],
                 'visual_suggestion' => 'A family celebrating graduation together.',
             ]), 200),
-            'image.pollinations.ai/*' => Http::response('temporary failure', 503, [
-                'Content-Type' => 'text/plain',
-            ]),
             'api.pexels.com/*' => Http::response($this->pexelsPayload(
                 'https://images.pexels.com/photos/example/family-graduation.jpeg',
                 'Jane Doe'
             ), 200),
-            'commons.wikimedia.org/*' => Http::response($this->commonsPayload('https://upload.wikimedia.org/example/photo.jpg'), 200),
         ]);
 
         $response = $this->post('/generate', [
@@ -121,11 +102,12 @@ class PostAgentTest extends TestCase
         $response
             ->assertOk()
             ->assertSee('https://images.pexels.com/photos/example/family-graduation.jpeg', false)
-            ->assertSee('الصورة: Jane Doe / Pexels')
-            ->assertDontSee('https://upload.wikimedia.org/example/photo.jpg', false);
+            ->assertSee('الصورة: Jane Doe / Pexels');
 
         Http::assertSent(fn ($request) => str_contains($request->url(), 'api.pexels.com')
+            && $request->hasHeader('Authorization', 'pexels-test-key')
             && str_contains(urldecode($request->url()), 'query=happy family students graduation ceremony'));
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'image.pollinations.ai'));
         Http::assertNotSent(fn ($request) => str_contains($request->url(), 'commons.wikimedia.org'));
     }
 
@@ -141,24 +123,19 @@ class PostAgentTest extends TestCase
             ->assertDontSee('Gemini');
     }
 
-    public function test_it_falls_back_to_local_design_when_real_image_search_has_no_results(): void
+    public function test_it_explains_when_pexels_key_is_missing_without_generating_image(): void
     {
         Config::set('services.gemini.key', 'gemini-test-key');
         Config::set('services.gemini.model', 'gemini-3.5-flash');
-        $existingImages = $this->generatedImageFileNames();
 
         Http::fake([
             'generativelanguage.googleapis.com/*gemini-3.5-flash*' => Http::response($this->modelPayload([
-                'suggested_title' => 'Local Design Fallback',
+                'suggested_title' => 'Pexels Key Missing',
                 'corrected_news' => 'Corrected post text.',
                 'activity_file_copy' => 'Corrected activity file text.',
-                'hashtags' => ['#Fallback', '#Design'],
+                'hashtags' => ['#Pexels'],
                 'visual_suggestion' => 'A clean Facebook scene.',
             ]), 200),
-            'image.pollinations.ai/*' => Http::response('temporary failure', 503, [
-                'Content-Type' => 'text/plain',
-            ]),
-            'commons.wikimedia.org/*' => Http::response(['query' => ['pages' => []]], 200),
         ]);
 
         $response = $this->post('/generate', [
@@ -167,44 +144,76 @@ class PostAgentTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSee('generated-images/', false)
+            ->assertSee('PEXELS_API_KEY')
+            ->assertDontSee('generated-images/', false)
             ->assertDontSee('Gemini');
 
-        $this->deleteNewGeneratedFiles($existingImages);
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'api.pexels.com'));
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'image.pollinations.ai'));
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'commons.wikimedia.org'));
     }
 
-    public function test_it_falls_back_to_local_design_when_real_image_search_times_out(): void
+    public function test_it_shows_message_when_pexels_has_no_results(): void
     {
         Config::set('services.gemini.key', 'gemini-test-key');
         Config::set('services.gemini.model', 'gemini-3.5-flash');
-        $existingImages = $this->generatedImageFileNames();
+        Config::set('services.pexels.key', 'pexels-test-key');
 
         Http::fake([
             'generativelanguage.googleapis.com/*gemini-3.5-flash*' => Http::response($this->modelPayload([
-                'suggested_title' => 'Timeout Fallback',
+                'suggested_title' => 'No Pexels Result',
                 'corrected_news' => 'Corrected post text.',
                 'activity_file_copy' => 'Corrected activity file text.',
                 'hashtags' => ['#Fallback'],
                 'visual_suggestion' => 'A clean Facebook scene.',
             ]), 200),
-            'image.pollinations.ai/*' => fn () => throw new ConnectionException('Timed out'),
-            'commons.wikimedia.org/*' => fn () => throw new ConnectionException('Timed out'),
+            'api.pexels.com/*' => Http::response(['photos' => []], 200),
         ]);
 
         $this->post('/generate', [
             'topic' => 'Correct this post text please.',
         ])
             ->assertOk()
-            ->assertSee('generated-images/', false);
+            ->assertSee('لم يعثر Pexels على صورة مناسبة')
+            ->assertDontSee('generated-images/', false);
 
-        $this->deleteNewGeneratedFiles($existingImages);
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'api.pexels.com'));
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'image.pollinations.ai'));
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'commons.wikimedia.org'));
+    }
+
+    public function test_it_shows_message_when_pexels_times_out(): void
+    {
+        Config::set('services.gemini.key', 'gemini-test-key');
+        Config::set('services.gemini.model', 'gemini-3.5-flash');
+        Config::set('services.pexels.key', 'pexels-test-key');
+
+        Http::fake([
+            'generativelanguage.googleapis.com/*gemini-3.5-flash*' => Http::response($this->modelPayload([
+                'suggested_title' => 'Timeout',
+                'corrected_news' => 'Corrected post text.',
+                'activity_file_copy' => 'Corrected activity file text.',
+                'hashtags' => ['#Fallback'],
+                'visual_suggestion' => 'A clean Facebook scene.',
+            ]), 200),
+            'api.pexels.com/*' => fn () => throw new ConnectionException('Timed out'),
+        ]);
+
+        $this->post('/generate', [
+            'topic' => 'Correct this post text please.',
+        ])
+            ->assertOk()
+            ->assertSee('لم يعثر Pexels على صورة مناسبة')
+            ->assertDontSee('generated-images/', false);
+
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'image.pollinations.ai'));
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'commons.wikimedia.org'));
     }
 
     public function test_post_body_uses_corrected_text_not_original_text(): void
     {
         Config::set('services.gemini.key', 'gemini-test-key');
         Config::set('services.gemini.model', 'gemini-3.5-flash');
-        $existingImages = $this->generatedImageFileNames();
 
         Http::fake([
             'generativelanguage.googleapis.com/*gemini-3.5-flash*' => Http::response($this->modelPayload([
@@ -214,10 +223,6 @@ class PostAgentTest extends TestCase
                 'hashtags' => ['#العائلة'],
                 'visual_suggestion' => 'مشهد زوجين سعيدين.',
             ]), 200),
-            'image.pollinations.ai/*' => Http::response('temporary failure', 503, [
-                'Content-Type' => 'text/plain',
-            ]),
-            'commons.wikimedia.org/*' => Http::response(['query' => ['pages' => []]], 200),
         ]);
 
         $this->post('/generate', [
@@ -226,8 +231,6 @@ class PostAgentTest extends TestCase
             ->assertOk()
             ->assertSee('<p>زوجتي جميلة.</p>', false)
             ->assertDontSee('<p>زوجتي عمار جميلة</p>', false);
-
-        $this->deleteNewGeneratedFiles($existingImages);
     }
 
     public function test_generate_get_route_returns_the_form(): void
@@ -268,27 +271,6 @@ class PostAgentTest extends TestCase
         ];
     }
 
-    private function commonsPayload(string $imageUrl): array
-    {
-        return [
-            'query' => [
-                'pages' => [
-                    10 => [
-                        'title' => 'File:Example photo.jpg',
-                        'imageinfo' => [
-                            [
-                                'url' => $imageUrl,
-                                'mime' => 'image/jpeg',
-                                'width' => 1200,
-                                'height' => 800,
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ];
-    }
-
     private function pexelsPayload(string $imageUrl, string $photographer): array
     {
         return [
@@ -305,21 +287,4 @@ class PostAgentTest extends TestCase
         ];
     }
 
-    private function generatedImageFileNames(): array
-    {
-        if (! File::isDirectory(public_path('generated-images'))) {
-            return [];
-        }
-
-        return collect(File::files(public_path('generated-images')))
-            ->map(fn ($file) => $file->getFilename())
-            ->all();
-    }
-
-    private function deleteNewGeneratedFiles(array $existingImages): void
-    {
-        collect(File::files(public_path('generated-images')))
-            ->reject(fn ($file) => in_array($file->getFilename(), $existingImages, true))
-            ->each(fn ($file) => File::delete($file->getPathname()));
-    }
 }
