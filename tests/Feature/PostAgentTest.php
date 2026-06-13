@@ -30,9 +30,14 @@ class PostAgentTest extends TestCase
                 'hashtags' => ['#AI', '#DataAnalysis', '#HealthData'],
                 'visual_suggestion' => 'People learning from data charts.',
             ]), 200),
-            'api.pexels.com/*' => Http::response($this->pexelsPayload(
+            'api.pexels.com/v1/search*' => Http::response($this->pexelsPayload(
                 'https://images.pexels.com/photos/example/data-workshop.jpeg',
                 'Jane Doe'
+            ), 200),
+            'api.pexels.com/videos/search*' => Http::response($this->pexelsVideoPayload(
+                'https://videos.pexels.com/video-files/example/data-workshop.mp4',
+                'https://images.pexels.com/videos/example/data-workshop.jpeg',
+                'John Video'
             ), 200),
         ]);
 
@@ -56,6 +61,8 @@ class PostAgentTest extends TestCase
             ->assertSee('#AI')
             ->assertSee('https://images.pexels.com/photos/example/data-workshop.jpeg', false)
             ->assertSee('الصورة: Jane Doe / Pexels')
+            ->assertSee('https://videos.pexels.com/video-files/example/data-workshop.mp4', false)
+            ->assertSee('الفيديو: John Video / Pexels')
             ->assertDontSee('Gemini');
 
         Http::assertSent(function ($request) {
@@ -67,9 +74,14 @@ class PostAgentTest extends TestCase
                 && str_contains($prompt, 'لا تذكر "المركز"')
                 && str_contains($prompt, 'عبارة بحث قصيرة ومختصرة');
         });
-        Http::assertSent(fn ($request) => str_contains($request->url(), 'api.pexels.com')
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'api.pexels.com/v1/search')
             && $request->hasHeader('Authorization', 'pexels-test-key')
             && str_contains(urldecode($request->url()), 'query=data analysis charts')
+            && str_contains(urldecode($request->url()), 'per_page=10'));
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'api.pexels.com/videos/search')
+            && $request->hasHeader('Authorization', 'pexels-test-key')
+            && str_contains(urldecode($request->url()), 'query=data analysis charts')
+            && str_contains(urldecode($request->url()), 'orientation=portrait')
             && str_contains(urldecode($request->url()), 'per_page=10'));
         Http::assertNotSent(fn ($request) => str_contains($request->url(), 'image.pollinations.ai'));
         Http::assertNotSent(fn ($request) => str_contains($request->url(), 'commons.wikimedia.org'));
@@ -89,9 +101,14 @@ class PostAgentTest extends TestCase
                 'hashtags' => ['#Family', '#Graduation'],
                 'visual_suggestion' => 'A family celebrating graduation together.',
             ]), 200),
-            'api.pexels.com/*' => Http::response($this->pexelsPayload(
+            'api.pexels.com/v1/search*' => Http::response($this->pexelsPayload(
                 'https://images.pexels.com/photos/example/family-graduation.jpeg',
                 'Jane Doe'
+            ), 200),
+            'api.pexels.com/videos/search*' => Http::response($this->pexelsVideoPayload(
+                'https://videos.pexels.com/video-files/example/family-graduation.mp4',
+                'https://images.pexels.com/videos/example/family-graduation.jpeg',
+                'John Video'
             ), 200),
         ]);
 
@@ -102,9 +119,14 @@ class PostAgentTest extends TestCase
         $response
             ->assertOk()
             ->assertSee('https://images.pexels.com/photos/example/family-graduation.jpeg', false)
-            ->assertSee('الصورة: Jane Doe / Pexels');
+            ->assertSee('الصورة: Jane Doe / Pexels')
+            ->assertSee('https://videos.pexels.com/video-files/example/family-graduation.mp4', false)
+            ->assertSee('الفيديو: John Video / Pexels');
 
-        Http::assertSent(fn ($request) => str_contains($request->url(), 'api.pexels.com')
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'api.pexels.com/v1/search')
+            && $request->hasHeader('Authorization', 'pexels-test-key')
+            && str_contains(urldecode($request->url()), 'query=happy family students graduation ceremony'));
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'api.pexels.com/videos/search')
             && $request->hasHeader('Authorization', 'pexels-test-key')
             && str_contains(urldecode($request->url()), 'query=happy family students graduation ceremony'));
         Http::assertNotSent(fn ($request) => str_contains($request->url(), 'image.pollinations.ai'));
@@ -145,6 +167,7 @@ class PostAgentTest extends TestCase
         $response
             ->assertOk()
             ->assertSee('PEXELS_API_KEY')
+            ->assertSee('فيديو Reels')
             ->assertDontSee('generated-images/', false)
             ->assertDontSee('Gemini');
 
@@ -167,7 +190,7 @@ class PostAgentTest extends TestCase
                 'hashtags' => ['#Fallback'],
                 'visual_suggestion' => 'A clean Facebook scene.',
             ]), 200),
-            'api.pexels.com/*' => Http::response(['photos' => []], 200),
+            'api.pexels.com/*' => Http::response(['photos' => [], 'videos' => []], 200),
         ]);
 
         $this->post('/generate', [
@@ -175,6 +198,7 @@ class PostAgentTest extends TestCase
         ])
             ->assertOk()
             ->assertSee('لم يعثر Pexels على صورة مناسبة')
+            ->assertSee('لم يعثر Pexels على فيديو مناسب')
             ->assertDontSee('generated-images/', false);
 
         Http::assertSent(fn ($request) => str_contains($request->url(), 'api.pexels.com'));
@@ -204,6 +228,7 @@ class PostAgentTest extends TestCase
         ])
             ->assertOk()
             ->assertSee('لم يعثر Pexels على صورة مناسبة')
+            ->assertSee('لم يعثر Pexels على فيديو مناسب')
             ->assertDontSee('generated-images/', false);
 
         Http::assertNotSent(fn ($request) => str_contains($request->url(), 'image.pollinations.ai'));
@@ -281,6 +306,37 @@ class PostAgentTest extends TestCase
                     'src' => [
                         'large2x' => $imageUrl,
                         'large' => $imageUrl,
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    private function pexelsVideoPayload(string $videoUrl, string $posterUrl, string $creator): array
+    {
+        return [
+            'videos' => [
+                [
+                    'url' => 'https://www.pexels.com/video/example',
+                    'image' => $posterUrl,
+                    'user' => [
+                        'name' => $creator,
+                    ],
+                    'video_files' => [
+                        [
+                            'link' => 'https://videos.pexels.com/video-files/example/square.mp4',
+                            'file_type' => 'video/mp4',
+                            'quality' => 'sd',
+                            'width' => 720,
+                            'height' => 720,
+                        ],
+                        [
+                            'link' => $videoUrl,
+                            'file_type' => 'video/mp4',
+                            'quality' => 'hd',
+                            'width' => 720,
+                            'height' => 1280,
+                        ],
                     ],
                 ],
             ],

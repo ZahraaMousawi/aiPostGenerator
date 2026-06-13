@@ -97,13 +97,14 @@
                     <strong id="pipeline-status" data-status-state="{{ $isReady ? 'ready' : ($hasGenerationError ? 'error' : 'idle') }}">{{ $isReady ? 'جاهز' : ($hasGenerationError ? 'تعذر الإنشاء' : 'بانتظار النص') }}</strong>
                 </div>
 
-                <div class="signal-list">
-                    <div class="{{ $isReady ? 'is-complete' : '' }}" data-signal-step="title"><span></span><b data-i18n="step_title">عنوان مناسب</b></div>
-                    <div class="{{ $isReady ? 'is-complete' : '' }}" data-signal-step="copy"><span></span><b data-i18n="step_copy">نص مصحح</b></div>
-                    <div class="{{ $isReady && $result['image_url'] ? 'is-complete' : '' }}" data-signal-step="image"><span></span><b data-i18n="step_image">صورة للموضوع</b></div>
-                    <div class="{{ $isReady ? 'is-complete' : '' }}" data-signal-step="hashtags"><span></span><b data-i18n="step_hashtags">هاشتاقات للنشر</b></div>
-                </div>
-            </aside>
+                    <div class="signal-list">
+                        <div class="{{ $isReady ? 'is-complete' : '' }}" data-signal-step="title"><span></span><b data-i18n="step_title">عنوان مناسب</b></div>
+                        <div class="{{ $isReady ? 'is-complete' : '' }}" data-signal-step="copy"><span></span><b data-i18n="step_copy">نص مصحح</b></div>
+                        <div class="{{ $isReady && $result['image_url'] ? 'is-complete' : '' }}" data-signal-step="image"><span></span><b data-i18n="step_image">صورة للموضوع</b></div>
+                        <div class="{{ $isReady && ($result['video_url'] ?? null) ? 'is-complete' : '' }}" data-signal-step="video"><span></span><b data-i18n="step_video">فيديو Reels</b></div>
+                        <div class="{{ $isReady ? 'is-complete' : '' }}" data-signal-step="hashtags"><span></span><b data-i18n="step_hashtags">هاشتاقات للنشر</b></div>
+                    </div>
+                </aside>
         </section>
 
         @if ($result)
@@ -124,6 +125,9 @@
                             <button type="button" class="compact-action" data-resubmit data-i18n="regenerate">إعادة التوليد</button>
                             @if ($result['image_url'])
                                 <a class="compact-action" href="{{ $result['image_url'] }}" download data-i18n="download_image">تحميل الصورة</a>
+                            @endif
+                            @if ($result['video_url'] ?? null)
+                                <a class="compact-action" href="{{ $result['video_url'] }}" download data-i18n="download_video">تحميل الفيديو</a>
                             @endif
                         </div>
 
@@ -179,6 +183,7 @@
                             <div class="preview-tabs" role="tablist" aria-label="اختيار المنصة">
                                 <button type="button" class="preview-tab is-active" data-preview-tab="facebook" role="tab" aria-selected="true">Facebook</button>
                                 <button type="button" class="preview-tab" data-preview-tab="instagram" role="tab" aria-selected="false">Instagram</button>
+                                <button type="button" class="preview-tab" data-preview-tab="reels" role="tab" aria-selected="false">Reels</button>
                             </div>
                         </div>
 
@@ -241,6 +246,33 @@
                                 <p dir="auto">{{ $result['corrected_news'] }}</p>
                                 <p class="instagram-tags" dir="auto">{{ $hashtagsText }}</p>
                             </div>
+                        </article>
+
+                        <article class="reels-post platform-preview" data-preview-panel="reels">
+                            <div class="reels-frame">
+                                @if ($result['video_url'] ?? null)
+                                    <video class="reels-video" src="{{ $result['video_url'] }}" poster="{{ $result['video_poster_url'] ?? '' }}" autoplay muted loop playsinline controls></video>
+                                    <div class="reels-overlay">
+                                        <div>
+                                            <strong dir="auto">{{ $result['suggested_title'] }}</strong>
+                                            <p dir="auto">{{ \Illuminate\Support\Str::limit($result['corrected_news'], 130) }}</p>
+                                            <span dir="auto">{{ $hashtagsText }}</span>
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="notice reels-notice">{{ $result['video_error'] ?? 'لم يعثر Pexels على فيديو مناسب.' }}</div>
+                                @endif
+                            </div>
+
+                            @if ($result['video_credit'] ?? null)
+                                <p class="image-credit reels-credit">
+                                    @if ($result['video_source_url'] ?? null)
+                                        <a href="{{ $result['video_source_url'] }}" target="_blank" rel="noopener noreferrer">{{ $result['video_credit'] }}</a>
+                                    @else
+                                        {{ $result['video_credit'] }}
+                                    @endif
+                                </p>
+                            @endif
                         </article>
 
                         <textarea id="facebook-copy" class="copy-buffer" readonly>{{ $facebookCopy }}</textarea>

@@ -70,6 +70,7 @@ class SocialPostAgent
 
         $normalized = $this->normalizePayload($payload);
         $image = $this->findRealImage($normalized);
+        $video = $this->findReelVideo($normalized);
 
         return array_merge($normalized, [
             'source' => 'gemini',
@@ -77,6 +78,11 @@ class SocialPostAgent
             'image_error' => $image['error'],
             'image_credit' => $image['credit'],
             'image_source_url' => $image['source_url'],
+            'video_url' => $video['url'],
+            'video_poster_url' => $video['poster_url'],
+            'video_error' => $video['error'],
+            'video_credit' => $video['credit'],
+            'video_source_url' => $video['source_url'],
         ]);
     }
 
@@ -189,6 +195,57 @@ PROMPT;
         }
 
         return $this->pickPexelsImage($response->json());
+    }
+
+    private function findReelVideo(array $content): array
+    {
+        $query = $this->imageSearchQuery($content);
+
+        $pexelsVideo = $this->findPexelsVideo($query);
+
+        if ($pexelsVideo !== null) {
+            return $pexelsVideo;
+        }
+
+        return [
+            'url' => null,
+            'poster_url' => null,
+            'error' => filled(config('services.pexels.key'))
+                ? 'لم يعثر Pexels على فيديو مناسب للمقترح: '.$query
+                : 'أضف PEXELS_API_KEY في ملف .env لاستخدام فيديوهات Pexels.',
+            'credit' => null,
+            'source_url' => null,
+        ];
+    }
+
+    private function findPexelsVideo(string $query): ?array
+    {
+        if (! filled(config('services.pexels.key'))) {
+            return null;
+        }
+
+        try {
+            $response = Http::timeout(8)
+                ->connectTimeout(3)
+                ->acceptJson()
+                ->withHeaders([
+                    'Authorization' => config('services.pexels.key'),
+                ])
+                ->get('https://api.pexels.com/videos/search', [
+                    'query' => $query,
+                    'orientation' => 'portrait',
+                    'size' => 'medium',
+                    'per_page' => 10,
+                ]);
+        } catch (ConnectionException) {
+            return null;
+        }
+
+        if (! $response->successful()) {
+            return null;
+        }
+
+        return $this->pickPexelsVideo($response->json());
     }
 
     private function imageSearchQuery(array $content): string
@@ -315,6 +372,64 @@ PROMPT;
         return null;
     }
 
+    private function pickPexelsVideo(?array $payload): ?array
+    {
+        foreach (data_get($payload, 'videos', []) as $video) {
+            if (! is_array($video)) {
+                continue;
+            }
+
+            $file = $this->bestPexelsVideoFile($video['video_files'] ?? []);
+
+            if ($file === null) {
+                continue;
+            }
+
+            $url = (string) ($file['link'] ?? '');
+
+            if ($url === '') {
+                continue;
+            }
+
+            $creator = trim((string) data_get($video, 'user.name', ''));
+            $credit = $creator !== ''
+                ? 'الفيديو: '.$creator.' / Pexels'
+                : 'الفيديو: Pexels';
+
+            return [
+                'url' => $url,
+                'poster_url' => filled($video['image'] ?? null) ? (string) $video['image'] : null,
+                'error' => null,
+                'credit' => $credit,
+                'source_url' => filled($video['url'] ?? null) ? (string) $video['url'] : null,
+            ];
+        }
+
+        return null;
+    }
+
+    private function bestPexelsVideoFile(mixed $files): ?array
+    {
+        if (! is_array($files)) {
+            return null;
+        }
+
+        $candidates = collect($files)
+            ->filter(fn ($file) => is_array($file) && str_contains((string) ($file['file_type'] ?? ''), 'video/mp4') && filled($file['link'] ?? null))
+            ->sortByDesc(function (array $file) {
+                $width = (int) ($file['width'] ?? 0);
+                $height = (int) ($file['height'] ?? 0);
+                $portraitBonus = $height > $width ? 100000000 : 0;
+                $qualityBonus = ($file['quality'] ?? '') === 'hd' ? 1000000 : 0;
+                $sizeScore = min($width * $height, 1920 * 1080);
+
+                return $portraitBonus + $qualityBonus + $sizeScore;
+            })
+            ->values();
+
+        return $candidates->first();
+    }
+
     private function decodeJsonFromModelText(string $text): ?array
     {
         $text = trim($text);
@@ -421,8 +536,13 @@ PROMPT;
             'image_url' => null,
             'image_credit' => null,
             'image_source_url' => null,
+            'video_url' => null,
+            'video_poster_url' => null,
+            'video_credit' => null,
+            'video_source_url' => null,
             'title' => 'لم يتم تفعيل المدقق اللغوي',
             'image_error' => 'أضف مفتاح خدمة الذكاء الاصطناعي في ملف .env ثم أعد تشغيل الخادم حتى يتم إنشاء المنشور.',
+            'video_error' => null,
         ];
     }
 
@@ -438,10 +558,15 @@ PROMPT;
             'image_url' => null,
             'image_credit' => null,
             'image_source_url' => null,
+            'video_url' => null,
+            'video_poster_url' => null,
+            'video_credit' => null,
+            'video_source_url' => null,
             'title' => 'تعذر إنشاء المنشور',
             'image_error' => $details
                 ? 'فشل إنشاء المنشور: '.$details
                 : 'فشل إنشاء المنشور. تحقق من مفتاح خدمة الذكاء الاصطناعي واسم النموذج.',
+            'video_error' => null,
         ];
     }
 }
